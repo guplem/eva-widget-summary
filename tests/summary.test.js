@@ -174,8 +174,24 @@ test("the title filter is a regular expression without case, and plain text when
   assert.equal(titleFilter("   ")("Anything"), false);
   assert.equal(titleFilter(undefined)("Anything"), false);
   // A longer setting is cut: the end past the limit is ignored.
-  const long = `${"a".repeat(maxPatternLength)}zzz`;
-  assert.equal(titleFilter(long)("a".repeat(maxPatternLength)), true);
+  assert.equal(titleFilter(`${" ".repeat(maxPatternLength)}, zzz`)("zzz"), false);
+  assert.equal(titleFilter(`${" ".repeat(maxPatternLength - 10)}, zzz`)("zzz"), true);
+});
+
+test("the title filter reads several expressions separated by commas, as the Calendar widget does", () => {
+  const hide = titleFilter("^lunch$, focus time");
+  assert.equal(hide("Lunch"), true);
+  assert.equal(hide("Focus time block"), true);
+  assert.equal(hide("Lunch with Sam"), false);
+  // A comma inside {} or [] belongs to its expression.
+  assert.equal(titleFilter("^a{2,3}$")("aaa"), true);
+  assert.equal(titleFilter("x[,;]y")("x;y"), true);
+});
+
+test("the title filter reads a slow expression as plain text, so a title cannot freeze the widget", () => {
+  const started = Date.now();
+  assert.equal(titleFilter("(a+)+$")(`${"a".repeat(40)}!`), false);
+  assert.ok(Date.now() - started < 100);
 });
 
 test("the filter hides events from now, soon and next", () => {
