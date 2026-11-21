@@ -8,12 +8,12 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   reporter: process.env.CI ? "github" : "list",
-  use: { baseURL: "http://localhost:3100/", trace: "retain-on-failure" },
+  use: { baseURL: "http://localhost:3140/", trace: "retain-on-failure", timezoneId: "UTC", locale: "en-GB" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     command: "node scripts/serve.js",
-    url: "http://localhost:3100/",
-    env: { PORT: "3100" },
+    url: "http://localhost:3140/",
+    env: { PORT: "3140" },
     reuseExistingServer: !process.env.CI,
   },
 });
