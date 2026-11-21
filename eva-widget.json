@@ -52,8 +52,8 @@
     {
       "id": "hideTitles",
       "type": "text",
-      "label": "Hide events whose title matches",
-      "description": "A regular expression, without case, such as ^focus time$|commute. An event whose title matches it does not show. A text that is not a valid expression is matched as plain text.",
+      "label": "Hide events by title",
+      "description": "Regular expressions, case-insensitive, separated by commas, such as ^Lunch$, Focus time. An event whose title matches one of them does not show. Use the same text as in the Calendar widget.",
       "why": "The widget leaves out repeated events that you do not need to see.",
       "required": false,
       "default": ""

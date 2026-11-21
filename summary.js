@@ -9,8 +9,10 @@ export const minuteMs = 60_000;
 export const hourMs = 3_600_000;
 const isoDay = /^\d{4}-\d{2}-\d{2}$/;
 
-/** The longest `hideTitles` expression that the widget reads. A longer one is cut. */
-export const maxPatternLength = 200;
+/** The limits of the `hideTitles` setting, as in the Calendar widget, so a long setting cannot freeze the widget. */
+export const maxPatternLength = 500;
+export const maxPatterns = 20;
+export const maxTitleLength = 300;
 /** The hours to look ahead when the setting is missing, and the range that the widget allows. */
 export const defaultHours = 6;
 export const maxHours = 24;
@@ -118,26 +120,117 @@ export function readEvents(value) {
   return events;
 }
 
+/**
+ * The patterns of the `hideTitles` setting, as the Calendar widget reads them. A comma separates
+ * two patterns, except inside `{}` or `[]`, so `a{2,3}` and `[,;]` stay whole. `\,` is a comma in a
+ * pattern too. Empty patterns are dropped.
+ */
+export function splitPatterns(raw) {
+  const parts = [];
+  let current = "";
+  let braces = 0;
+  let inClass = false;
+  for (let index = 0; index < raw.length; index += 1) {
+    const char = raw[index];
+    if (char === "\\" && index + 1 < raw.length) {
+      current += char + raw[index + 1];
+      index += 1;
+      continue;
+    }
+    if (inClass) {
+      if (char === "]") inClass = false;
+    } else if (char === "[") inClass = true;
+    else if (char === "{") braces += 1;
+    else if (char === "}") braces = Math.max(0, braces - 1);
+    else if (char === "," && braces === 0) {
+      parts.push(current);
+      current = "";
+      continue;
+    }
+    current += char;
+  }
+  parts.push(current);
+  return parts.map((part) => part.trim()).filter((part) => part !== "");
+}
+
+/**
+ * Whether a regular expression may take very long on some titles: a repeated group that holds a
+ * repeat itself, such as `(a+)+` or `(\w*\s?)*`, can try an exponential number of ways. Such a
+ * pattern is matched as plain text instead.
+ */
+export function isSlowPattern(pattern) {
+  const groups = [{ repeats: false }];
+  let closed = null;
+  let index = 0;
+  while (index < pattern.length) {
+    const char = pattern[index];
+    let repeat = char === "*" || char === "+";
+    let length = 1;
+    if (char === "{") {
+      const bound = /^\{(\d+)(,(\d*))?\}/.exec(pattern.slice(index));
+      if (bound !== null) {
+        length = bound[0].length;
+        const most = bound[2] === undefined ? Number(bound[1]) : bound[3] === "" ? Infinity : Number(bound[3]);
+        repeat = most > 1;
+      }
+    }
+    if (repeat) {
+      if (closed?.repeats === true) return true;
+      groups[groups.length - 1].repeats = true;
+      closed = null;
+      index += length;
+      continue;
+    }
+    closed = null;
+    if (char === "\\") index += 2;
+    else if (char === "[") {
+      index += 1;
+      while (index < pattern.length && pattern[index] !== "]") index += pattern[index] === "\\" ? 2 : 1;
+      index += 1;
+    } else if (char === "(") {
+      groups.push({ repeats: false });
+      index += 1;
+    } else if (char === ")") {
+      if (groups.length > 1) {
+        closed = groups.pop();
+        if (closed.repeats) groups[groups.length - 1].repeats = true;
+      }
+      index += 1;
+    } else index += 1;
+  }
+  return false;
+}
+
 function escapeExpression(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function compilePattern(text) {
+  const literal = new RegExp(escapeExpression(text), "i");
+  if (isSlowPattern(text)) return literal;
+  try {
+    return new RegExp(text, "i");
+  } catch {
+    // An invalid expression is plain text: a typo hides what it says, not every event.
+    return literal;
+  }
+}
+
 /**
- * The `hideTitles` setting as a test of a title: true hides the event. The setting is a regular
- * expression, read without case. An expression that is not valid is plain text. An empty setting
- * hides nothing. The widget reads the first `maxPatternLength` characters only.
+ * The `hideTitles` setting as a test of a title: true hides the event. As in the Calendar widget,
+ * the setting holds regular expressions, read without case and separated by commas. A pattern that
+ * is not valid, or that could be slow, is plain text. An empty setting hides nothing. The widget
+ * reads the first `maxPatternLength` characters, the first `maxPatterns` patterns, and the first
+ * `maxTitleLength` characters of a title.
  */
 export function titleFilter(source) {
   if (typeof source !== "string") return () => false;
-  const text = source.trim().slice(0, maxPatternLength);
-  if (text === "") return () => false;
-  let expression;
-  try {
-    expression = new RegExp(text, "i");
-  } catch {
-    expression = new RegExp(escapeExpression(text), "i");
-  }
-  return (title) => expression.test(title);
+  const patterns = splitPatterns(source.slice(0, maxPatternLength)).slice(0, maxPatterns).map(compilePattern);
+  if (patterns.length === 0) return () => false;
+  return (title) => {
+    const text = String(title).slice(0, maxTitleLength);
+    return patterns.some((pattern) => pattern.test(text));
+  };
 }
 
 /** The hours to look ahead, from the setting: a whole number from 1 to 24, 6 when not given. */
