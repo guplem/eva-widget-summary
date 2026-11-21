@@ -28,7 +28,7 @@ This repository is the Summary widget for Eva's home page: the weather now, the 
 
 - `npm run check` runs every check: the format, the lint, the contract check (`npm run check:widget`) and the tests. CI runs the same checks as the "lint" and "test" jobs.
 - `npm start` runs the widget at http://localhost:3000/. Add `?size=header`, `small`, `medium`, `large`, `tall`, `xlarge` or `full` to the address.
-- The Playwright tests run their own server on port 3140, so they never reuse the server of another widget on the template's port.
+- The tests serve the widget on port 3140, and never reuse a server that already listens. Set `WIDGET_TEST_PORT` to test while another widget repository tests on the same computer.
 
 ## Skills
 

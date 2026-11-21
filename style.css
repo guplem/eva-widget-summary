@@ -1002,3 +1002,23 @@ button {
   height: 26px;
   font-size: 13px;
 }
+
+/* --- No location -------------------------------------------------------------------------------- */
+
+/* With no location the weather hides: the events take its column, and the credit of the weather goes. */
+.widget[data-weather="none"] .credit {
+  display: none;
+}
+
+.widget[data-size="medium"]:has(> .weather[hidden]) {
+  grid-template-areas: "agenda";
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.widget[data-size="large"]:has(> .weather[hidden]) {
+  grid-template-areas:
+    "timeline"
+    "agenda";
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}

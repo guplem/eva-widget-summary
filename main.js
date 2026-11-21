@@ -552,7 +552,7 @@ function openMenu(event, anchor) {
   const actions = [];
   if (state.asks.has("chat")) {
     actions.push(
-      menuButton("Open a chat about this event", () => {
+      menuButton("Start a chat about this event", () => {
         const answer = ask({ ask: "chat", text: chatText(event, now) });
         closeMenu();
         void answer.then((result) => {

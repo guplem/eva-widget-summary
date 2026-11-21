@@ -277,7 +277,7 @@ export function timelineBars(events, from, to) {
   return { bars, lanes: laneEnds.length };
 }
 
-/** The text that "Open a chat about this event" puts in Eva's message box, 2000 characters at most. */
+/** The text that "Start a chat about this event" puts in Eva's message box, 2000 characters at most. */
 export function chatText(event, now) {
   const when = event.allDay
     ? `${event.date === dayOf(now) ? "today" : event.date}, all day`

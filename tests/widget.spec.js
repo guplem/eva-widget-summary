@@ -179,6 +179,25 @@ test.describe("the states, with words", () => {
     await expect(event(page, "Review")).toContainText("ends in 30 min");
   });
 
+  for (const [size, width, height] of [
+    ["medium", 418, 150],
+    ["large", 418, 200],
+  ]) {
+    test(`no location in ${size}: the events take the weather's column, and no weather credit shows`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height });
+      await fakeEvaLocation(page, null);
+      await fakeEvaCalendar(page, { calendars, events: [eventAt("Review", -10, 30)] });
+      await open(page, size);
+      await expect(page.locator(".weather")).toBeHidden();
+      await expect(page.locator(".credit")).toBeHidden();
+      const agenda = await page.locator(".agenda").boundingBox();
+      // The agenda starts near the left edge, with no empty column of the weather before it.
+      expect(agenda.x).toBeLessThan(24);
+    });
+  }
+
   test("no location and the calendar off: words for both, never an empty strip", async ({ page }) => {
     await fakeEvaLocation(page, null);
     await fakeEvaCalendar(page, { calendars: null, events: null });
@@ -252,7 +271,7 @@ test.describe("the menu of an event", () => {
     const menu = frame.locator(".menu");
     await expect(menu).toBeVisible();
     await expect(menu.locator(".menu-action")).toHaveText([
-      "Open a chat about this event",
+      "Start a chat about this event",
       "See in Google Calendar",
       "Open the project Example app",
     ]);
@@ -260,7 +279,7 @@ test.describe("the menu of an event", () => {
       "href",
       "https://calendar.google.com/calendar/",
     );
-    await menu.getByRole("button", { name: "Open a chat about this event" }).click();
+    await menu.getByRole("button", { name: "Start a chat about this event" }).click();
     await expect(menu).toBeHidden();
     await expect.poll(asks).toHaveLength(1);
     const [chat] = await asks();
@@ -277,7 +296,7 @@ test.describe("the menu of an event", () => {
     const { frame } = await openInFakeEva(page, "header", { width: 640, height: 76 });
     await frame.locator(".event", { hasText: "Gym" }).click();
     await expect(frame.locator(".menu .menu-action")).toHaveText([
-      "Open a chat about this event",
+      "Start a chat about this event",
       "See in Google Calendar",
     ]);
   });

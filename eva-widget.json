@@ -68,7 +68,7 @@
   "asks": [
     {
       "type": "chat",
-      "why": "A tap on \"Open a chat about this event\" puts a line about the event in Eva's message box. Eva never sends it by herself."
+      "why": "A tap on \"Start a chat about this event\" puts a line about the event in Eva's message box. Eva never sends it by herself."
     },
     {
       "type": "open",
