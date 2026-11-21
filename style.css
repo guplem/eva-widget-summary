@@ -1,7 +1,18 @@
 /*
- * The widget fills the whole space that it gets, at every size, with no empty border. Each colour
- * has a fallback, so the widget works without eva/theme.css too.
+ * The Summary widget fills the whole space that it gets, at every size, with no empty border. Each
+ * colour is an EVE theme variable with a fallback, so the widget works without eva/theme.css too.
+ *
+ * Eva puts her full-screen button over the top right corner: 56 px wide and 56 px high, at every
+ * size (docs/widgets.md, "Sizes"). In the header strip, 64 to 76 px high, that corner is almost the
+ * whole height, so the strip keeps its right 64 px free.
+ *
+ * main.js reads three numbers of the event list: `--axis` (row: side by side; column: one under the
+ * other), `--slot` (the width or the height of one event, in px) and `--more` (the "+N" chip).
  */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -14,107 +25,980 @@ body {
   font-family: system-ui, sans-serif;
 }
 
+button {
+  font: inherit;
+  color: inherit;
+}
+
 .widget {
+  position: relative;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(4px, 2vmin, 16px);
+  display: grid;
+  gap: 8px 14px;
   width: 100vw;
   height: 100vh;
-  padding: clamp(8px, 3vmin, 32px);
+  padding: 12px 16px;
   overflow: hidden;
   background: var(--panel, #ffffff);
 }
 
-.widget-header {
+/* --- The weather -------------------------------------------------------------------------------- */
+
+.weather {
+  grid-area: weather;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 4px 12px;
-  /* Eva puts her full-screen button over the top right corner (docs/widgets.md, "Sizes"). */
-  padding-right: 56px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
 }
 
-.widget-title {
-  margin: 0;
-  font-size: clamp(16px, 6vmin, 40px);
+.weather-icon {
+  display: flex;
+  flex: none;
 }
 
-.widget-summary,
-.widget-location,
-.widget-note {
-  margin: 0;
+.weather-icon:empty {
+  display: none;
+}
+
+.icon {
+  width: 34px;
+  height: 34px;
+  overflow: visible;
+}
+
+.icon-sun circle {
+  fill: var(--warn, #9a6b00);
+}
+
+.icon-sun line {
+  stroke: var(--warn, #9a6b00);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.icon-moon {
+  fill: var(--muted, #5d6475);
+}
+
+.icon-cloud {
+  fill: var(--chip, #eef0f5);
+  stroke: var(--muted, #5d6475);
+  stroke-width: 1.4;
+}
+
+.icon-fog,
+.icon-rain {
+  stroke: var(--accent, #3b82f6);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.icon-snow {
+  fill: var(--accent, #3b82f6);
+}
+
+.icon-bolt {
+  fill: var(--warn, #9a6b00);
+}
+
+.weather-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.weather-temperature {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.weather-temperature:empty {
+  display: none;
+}
+
+.weather-words {
+  overflow: hidden;
   color: var(--muted, #5d6475);
-  font-size: clamp(12px, 3.5vmin, 22px);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.widget-note {
-  color: var(--warn, #9a6b00);
+/* No temperature: the words are the main line. */
+.weather-temperature:empty + .weather-words {
+  color: var(--ink, #1f2430);
+  font-size: 13px;
+  white-space: normal;
 }
 
-.widget-link {
-  color: var(--accent, #3b82f6);
-  font-size: clamp(12px, 3.5vmin, 22px);
+.weather-change:not(:empty)::before {
+  content: " · ";
 }
 
-.habit-list {
-  display: grid;
+.weather-range {
+  display: none;
+  color: var(--muted, #5d6475);
+  font-size: 13px;
+}
+
+/* --- The events --------------------------------------------------------------------------------- */
+
+.agenda {
+  grid-area: agenda;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.events {
+  --axis: row;
+  --slot: 150;
+  --gap: 6;
+  --more: 44;
+  display: flex;
   flex: 1;
-  grid-auto-rows: minmax(2.5em, 1fr);
-  gap: clamp(4px, 1.5vmin, 12px);
+  gap: 6px;
+  min-width: 0;
   min-height: 0;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
   list-style: none;
 }
 
-.habit {
-  display: flex;
+.events:empty {
+  display: none;
 }
 
-.habit-check {
-  flex: 1;
-  padding: 0 1em;
+.events-item {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 260px;
+}
+
+.events-item.is-more {
+  flex: 0 0 auto;
+}
+
+.event {
+  display: grid;
+  grid-template-rows: auto auto;
+  grid-template-columns: 4px minmax(0, 1fr);
+  align-content: center;
+  column-gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 4px 10px 4px 6px;
   border: 1px solid var(--line, #d9dce5);
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--chip, #eef0f5);
-  color: inherit;
-  font: inherit;
-  font-size: clamp(14px, 4vmin, 28px);
   text-align: left;
   cursor: pointer;
 }
 
-.habit-check[aria-pressed="true"] {
-  border-color: var(--accent, #3b82f6);
-  background: var(--accent, #3b82f6);
-  color: var(--on-accent, #ffffff);
+.event-bar {
+  grid-row: 1 / 3;
+  border-radius: 2px;
+  background: var(--calendar-colour, var(--accent, #3b82f6));
 }
 
-/* Small: the count fills the card, with no list. */
-.widget[data-size="small"] .habit-list {
+.event-title,
+.event-when {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.event-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* The screen reader reads "Design review · ends in 25 min"; the eye sees two lines. */
+.event-sep {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.event-when {
+  color: var(--muted, #5d6475);
+  font-size: 12px;
+}
+
+/* What runs now stands out: the main colour, and its countdown to the end. */
+.event[data-kind="now"] {
+  border-color: transparent;
+  background: var(--soft, #e6efff);
+}
+
+.event[data-kind="now"] .event-bar {
+  background: var(--accent, #3b82f6);
+}
+
+.event[data-kind="now"] .event-when {
+  color: var(--soft-ink, #1e40af);
+  font-weight: 600;
+}
+
+.event[data-kind="allday"] {
+  border-style: dashed;
+  background: transparent;
+}
+
+.event:hover,
+.more:hover {
+  border-color: var(--accent, #3b82f6);
+}
+
+.event:focus-visible,
+.more:focus-visible,
+.menu-action:focus-visible,
+.menu-close:focus-visible,
+.timeline-bar:focus-visible {
+  outline: 2px solid var(--accent, #3b82f6);
+  outline-offset: 1px;
+}
+
+.more {
+  box-sizing: border-box;
+  min-width: 40px;
+  height: 100%;
+  padding: 0 8px;
+  border: 1px solid var(--line, #d9dce5);
+  border-radius: 10px;
+  background: var(--panel, #ffffff);
+  color: var(--accent-ink, #1d4ed8);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.calm {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  margin: 0;
+}
+
+.calm-line {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.later {
+  display: none;
+  margin: 0;
+  color: var(--muted, #5d6475);
+  font-size: 12px;
+}
+
+.widget[data-size="large"] .later,
+.widget[data-size="xlarge"] .later,
+.widget[data-size="full"] .later,
+.widget[data-size="tall"] .later {
+  display: block;
+}
+
+.later:empty {
+  display: none !important;
+}
+
+.calm-next {
+  overflow: hidden;
+  color: var(--muted, #5d6475);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.status {
+  align-self: center;
+  margin: 0;
+  color: var(--muted, #5d6475);
+  font-size: 13px;
+}
+
+.status.is-note {
+  color: var(--warn, #9a6b00);
+}
+
+.credit {
+  grid-area: credit;
+  display: none;
+  align-self: end;
+  font-size: 11px;
+}
+
+.credit a {
+  color: var(--muted, #5d6475);
+}
+
+/* --- The timeline ------------------------------------------------------------------------------- */
+
+.timeline {
+  grid-area: timeline;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.timeline-scale {
+  position: relative;
+  height: 36px;
+}
+
+.timeline-mark {
+  position: absolute;
+  left: calc(var(--left) * 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--muted, #5d6475);
+  font-size: 11px;
+  transform: translateX(-50%);
+}
+
+.timeline-mark.is-now {
+  align-items: flex-start;
+  color: var(--accent-ink, #1d4ed8);
+  font-weight: 600;
+  transform: none;
+}
+
+.timeline-weather {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.timeline-weather .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.timeline-track {
+  position: relative;
+  min-height: 28px;
+  height: calc(var(--lanes, 1) * 28px);
+  border-left: 2px solid var(--accent, #3b82f6);
+  border-radius: 2px;
+  background: var(--chip, #eef0f5);
+}
+
+.timeline-bar {
+  position: absolute;
+  top: calc(var(--lane) * 28px + 3px);
+  left: calc(var(--left) * 100%);
+  box-sizing: border-box;
+  width: calc(var(--width) * 100%);
+  height: 22px;
+  padding: 0 6px;
+  overflow: hidden;
+  border: none;
+  border-radius: 6px;
+  background: var(--calendar-colour, var(--accent, #3b82f6));
+  color: var(--on-accent, #ffffff);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.timeline-bar[data-kind="now"] {
+  box-shadow: inset 0 0 0 2px var(--panel, #ffffff);
+}
+
+.timeline-title {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.timeline-empty {
+  margin: 0;
+  padding: 6px 10px;
+  color: var(--muted, #5d6475);
+  font-size: 12px;
+}
+
+/* --- The menu of an event ----------------------------------------------------------------------- */
+
+.menu {
+  --menu-mode: float;
+  position: absolute;
+  top: var(--menu-top, 8px);
+  left: var(--menu-left, 8px);
+  z-index: 10;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(320px, calc(100% - 16px));
+  max-height: calc(100% - 16px);
+  padding: 10px;
+  overflow: auto;
+  border: 1px solid var(--line, #d9dce5);
+  border-radius: 12px;
+  background: var(--panel, #ffffff);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 18%);
+}
+
+.menu-head {
+  min-width: 0;
+  padding-right: 28px;
+}
+
+.menu-title,
+.menu-when {
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.menu-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.menu-when {
+  color: var(--muted, #5d6475);
+  font-size: 12px;
+}
+
+.menu-when:empty {
   display: none;
 }
 
-.widget[data-size="small"] .widget-header {
-  flex: 1;
+.menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.menu-action {
+  box-sizing: border-box;
+  padding: 6px 10px;
+  overflow: hidden;
+  border: 1px solid var(--line, #d9dce5);
+  border-radius: 8px;
+  background: var(--chip, #eef0f5);
+  color: var(--ink, #1f2430);
+  font-size: 13px;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.menu-action:hover {
+  border-color: var(--accent, #3b82f6);
+}
+
+.menu-empty {
+  margin: 0;
+  color: var(--muted, #5d6475);
+  font-size: 12px;
+}
+
+.menu-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted, #5d6475);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/*
+ * In the strip and the small sizes, a menu does not fit beside the event: it lies over the widget,
+ * its entries side by side, and keeps Eva's corner free. Its close button comes first.
+ */
+.widget[data-size="header"] .menu,
+.widget[data-size="small"] .menu,
+.widget[data-size="medium"] .menu {
+  --menu-mode: overlay;
+  inset: 0;
+  flex-flow: row wrap;
+  align-items: center;
+  align-content: center;
+  width: auto;
+  max-height: none;
+  padding: 8px 64px 8px 44px;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.widget[data-size="header"] .menu-head,
+.widget[data-size="small"] .menu-head,
+.widget[data-size="medium"] .menu-head {
+  flex: 0 1 auto;
+  max-width: 40%;
+  padding-right: 0;
+}
+
+.widget[data-size="header"] .menu-actions,
+.widget[data-size="small"] .menu-actions,
+.widget[data-size="medium"] .menu-actions {
+  flex: 1 1 auto;
+  flex-flow: row wrap;
+}
+
+/* In the strip, the entries stay on one line, and scroll sideways inside the menu when they do not fit. */
+@media (max-height: 119px) {
+  .widget[data-size="header"] .menu {
+    flex-wrap: nowrap;
+  }
+
+  .widget[data-size="header"] .menu-head {
+    flex: 0 0 auto;
+    max-width: 30%;
+  }
+
+  .widget[data-size="header"] .menu-actions {
+    flex-wrap: nowrap;
+    min-width: 0;
+    overflow-x: auto;
+  }
+
+  .widget[data-size="header"] .menu-action {
+    flex: none;
+  }
+}
+
+/* With more height, the title takes its own line and the entries wrap under it. */
+@media (min-height: 120px) {
+  .widget[data-size="header"] .menu-head,
+  .widget[data-size="small"] .menu-head,
+  .widget[data-size="medium"] .menu-head {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+}
+
+.widget[data-size="header"] .menu-close,
+.widget[data-size="small"] .menu-close,
+.widget[data-size="medium"] .menu-close {
+  top: 50%;
+  right: auto;
+  left: 10px;
+  transform: translateY(-50%);
+}
+
+/* --- Header: the strip beside Eva's greeting ---------------------------------------------------- */
+
+.widget[data-size="header"] {
+  grid-template-areas: "weather agenda";
+  grid-template-columns: fit-content(40%) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  column-gap: 10px;
+  padding: 8px 64px 8px 12px;
+}
+
+.widget[data-size="header"] .events {
+  --slot: 120;
+  --more: 40;
+}
+
+.widget[data-size="header"] .weather-words {
+  max-width: 22ch;
+}
+
+/* A narrow strip keeps the weather short: the next change, or else the sky. */
+@media (max-width: 560px) and (max-height: 119px) {
+  .widget[data-size="header"] .weather-change:not(:empty)::before {
+    content: none;
+  }
+
+  .widget[data-size="header"] .weather-words:has(.weather-change:not(:empty)) .weather-sky {
+    display: none;
+  }
+}
+
+@media (max-width: 440px) {
+  .widget[data-size="header"] .weather-words {
+    max-width: 14ch;
+  }
+
+  .widget[data-size="header"] .events {
+    --slot: 100;
+    --more: 36;
+  }
+}
+
+/* The narrowest strip: with events to show, the weather keeps its icon and temperature only. */
+@media (max-width: 360px) and (max-height: 119px) {
+  .widget[data-size="header"].has-events .weather-words {
+    display: none;
+  }
+}
+
+/* On a phone, the strip is the first card of the grid: the weather on top, the events below. */
+@media (min-height: 120px) {
+  .widget[data-size="header"] {
+    grid-template-areas:
+      "weather"
+      "agenda";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    row-gap: 6px;
+    padding: 10px 14px;
+  }
+
+  .widget[data-size="header"] .weather {
+    min-height: 32px;
+    padding-right: 48px;
+  }
+
+  .widget[data-size="header"] .icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .widget[data-size="header"] .weather-temperature {
+    font-size: 22px;
+  }
+
+  .widget[data-size="header"] .weather-text {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .widget[data-size="header"] .weather-words {
+    max-width: none;
+  }
+}
+
+/* --- The grid sizes ----------------------------------------------------------------------------- */
+
+/* The sizes with one event under the other. */
+.widget[data-size="small"] .events,
+.widget[data-size="medium"] .events,
+.widget[data-size="tall"] .events,
+.widget[data-size="xlarge"] .events,
+.widget[data-size="full"] .events {
+  --axis: column;
+  --slot: 44;
+  --more: 32;
+  flex-direction: column;
+}
+
+@media (min-height: 120px) {
+  .widget[data-size="header"] .events {
+    --axis: column;
+    --slot: 38;
+    --gap: 4;
+    --more: 24;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .widget[data-size="header"] .events {
+    flex: 0 1 auto;
+  }
+
+  /* The weather row is lower than Eva's corner: the events keep its width free too. */
+  .widget[data-size="header"] .agenda {
+    flex-direction: column;
+    padding-right: 44px;
+  }
+
+  .widget[data-size="header"] .events-item {
+    flex: 0 0 38px;
+    max-width: none;
+  }
+
+  .widget[data-size="header"] .events-item.is-more {
+    flex: 0 0 24px;
+    align-self: flex-start;
+  }
+
+  .widget[data-size="header"] .event {
+    padding-block: 2px;
+  }
+
+  .widget[data-size="header"] .event-title {
+    font-size: 13px;
+  }
+
+  .widget[data-size="header"] .event-when {
+    font-size: 11px;
+  }
+}
+
+.widget[data-size="small"] .events-item,
+.widget[data-size="medium"] .events-item,
+.widget[data-size="tall"] .events-item,
+.widget[data-size="xlarge"] .events-item,
+.widget[data-size="full"] .events-item {
+  flex: 0 0 44px;
+  max-width: none;
+}
+
+.widget[data-size="small"] .events-item.is-more,
+.widget[data-size="medium"] .events-item.is-more,
+.widget[data-size="tall"] .events-item.is-more,
+.widget[data-size="xlarge"] .events-item.is-more,
+.widget[data-size="full"] .events-item.is-more {
+  flex: 0 0 32px;
+  align-self: flex-start;
+}
+
+.widget[data-size="small"] .events,
+.widget[data-size="medium"] .events,
+.widget[data-size="tall"] .events,
+.widget[data-size="xlarge"] .events,
+.widget[data-size="full"] .events {
+  flex: 0 1 auto;
+}
+
+.widget[data-size="small"] .agenda,
+.widget[data-size="medium"] .agenda,
+.widget[data-size="tall"] .agenda,
+.widget[data-size="xlarge"] .agenda,
+.widget[data-size="full"] .agenda {
+  flex-direction: column;
+}
+
+.widget[data-size="small"] .calm,
+.widget[data-size="medium"] .calm,
+.widget[data-size="tall"] .calm,
+.widget[data-size="xlarge"] .calm,
+.widget[data-size="full"] .calm {
+  justify-content: flex-start;
+}
+
+.widget[data-size="small"] .status,
+.widget[data-size="medium"] .status,
+.widget[data-size="tall"] .status,
+.widget[data-size="xlarge"] .status,
+.widget[data-size="full"] .status {
+  align-self: flex-start;
+}
+
+/* Small: the weather on top, then the most urgent events. */
+.widget[data-size="small"] {
+  grid-template-areas:
+    "weather"
+    "agenda";
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: 12px;
+}
+
+.widget[data-size="small"] .weather {
+  min-height: 40px;
+  padding-right: 44px;
+}
+
+/* Medium: the weather on the left, the events on the right. */
+.widget[data-size="medium"] {
+  grid-template-areas: "weather agenda";
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.widget[data-size="medium"] .weather {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
 }
 
-.widget[data-size="small"] .widget-summary {
-  color: var(--ink, #1f2430);
-  font-size: clamp(16px, 9vmin, 48px);
+.widget[data-size="medium"] .weather-words {
+  white-space: normal;
 }
 
-/* Large, xlarge and full: the list takes two columns when the space is wide. */
-@media (min-aspect-ratio: 3/2) {
-  .widget[data-size="large"] .habit-list,
-  .widget[data-size="xlarge"] .habit-list,
-  .widget[data-size="full"] .habit-list {
-    grid-template-columns: repeat(2, 1fr);
+.widget[data-size="medium"] .weather-change:not(:empty)::before {
+  content: "";
+  display: block;
+}
+
+.widget[data-size="medium"] .agenda {
+  padding-right: 40px;
+}
+
+/* Tall, large, xlarge and full: a bigger weather block. */
+.widget[data-size="tall"] .icon,
+.widget[data-size="large"] .weather .icon,
+.widget[data-size="xlarge"] .weather .icon,
+.widget[data-size="full"] .weather .icon {
+  width: 44px;
+  height: 44px;
+}
+
+.widget[data-size="tall"] .weather-temperature,
+.widget[data-size="large"] .weather-temperature,
+.widget[data-size="xlarge"] .weather-temperature,
+.widget[data-size="full"] .weather-temperature {
+  font-size: 30px;
+}
+
+.widget[data-size="tall"] .weather-words,
+.widget[data-size="large"] .weather-words,
+.widget[data-size="xlarge"] .weather-words,
+.widget[data-size="full"] .weather-words {
+  font-size: 13px;
+  white-space: normal;
+}
+
+.widget[data-size="tall"] .weather-range,
+.widget[data-size="large"] .weather-range,
+.widget[data-size="xlarge"] .weather-range,
+.widget[data-size="full"] .weather-range {
+  display: block;
+  margin-left: auto;
+}
+
+.widget[data-size="tall"] .credit,
+.widget[data-size="large"] .credit,
+.widget[data-size="xlarge"] .credit,
+.widget[data-size="full"] .credit {
+  display: block;
+}
+
+.widget[data-size="tall"] {
+  grid-template-areas:
+    "weather"
+    "agenda"
+    "credit";
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.widget[data-size="tall"] .weather,
+.widget[data-size="xlarge"] .weather,
+.widget[data-size="full"] .weather {
+  min-height: 48px;
+  padding-right: 48px;
+}
+
+/* Large: the timeline of the next hours. A short card puts the weather on the left. */
+.widget[data-size="large"] {
+  grid-template-areas:
+    "weather timeline"
+    "credit agenda";
+  grid-template-columns: minmax(150px, 1fr) minmax(0, 3fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.widget[data-size="large"] .timeline {
+  padding-right: 44px;
+}
+
+.widget[data-size="large"] .weather {
+  flex-wrap: wrap;
+  align-content: flex-start;
+}
+
+.widget[data-size="large"] .weather-range {
+  flex-basis: 100%;
+  margin-left: 0;
+}
+
+@media (min-height: 261px) {
+  .widget[data-size="large"] {
+    grid-template-areas:
+      "weather"
+      "timeline"
+      "agenda"
+      "credit";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
   }
+
+  .widget[data-size="large"] .weather {
+    flex-wrap: nowrap;
+    min-height: 48px;
+    padding-right: 48px;
+  }
+
+  .widget[data-size="large"] .weather-range {
+    flex-basis: auto;
+    margin-left: auto;
+  }
+
+  .widget[data-size="large"] .timeline {
+    padding-right: 0;
+  }
+
+  .widget[data-size="large"] .events {
+    --axis: column;
+    --slot: 44;
+    --more: 32;
+    flex-direction: column;
+  }
+
+  .widget[data-size="large"] .events-item {
+    flex: 0 0 44px;
+    max-width: none;
+  }
+
+  .widget[data-size="large"] .events-item.is-more {
+    flex: 0 0 32px;
+    align-self: flex-start;
+  }
+
+  .widget[data-size="large"] .agenda {
+    flex-direction: column;
+  }
+
+  .widget[data-size="large"] .events {
+    flex: 0 1 auto;
+  }
+}
+
+/* Xlarge and full: the weather, the timeline, every event of the next hours, and the credit. */
+.widget[data-size="xlarge"],
+.widget[data-size="full"] {
+  grid-template-areas:
+    "weather"
+    "timeline"
+    "agenda"
+    "credit";
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.widget[data-size="full"] .weather-temperature {
+  font-size: 40px;
+}
+
+.widget[data-size="full"] .weather .icon {
+  width: 56px;
+  height: 56px;
+}
+
+.widget[data-size="full"] .timeline-track {
+  height: calc(var(--lanes, 1) * 32px);
+}
+
+.widget[data-size="full"] .timeline-bar {
+  top: calc(var(--lane) * 32px + 3px);
+  height: 26px;
+  font-size: 13px;
 }

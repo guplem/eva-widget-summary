@@ -1,39 +1,78 @@
 {
-  "contract": 2,
+  "contract": 3,
   "name": "Summary",
   "entry": "index.html",
-  "size": "medium",
+  "size": "header",
   "inputs": [
     {
-      "id": "title",
-      "type": "text",
-      "label": "Title",
-      "description": "The title at the top of the widget.",
-      "why": "The widget shows it as its heading.",
-      "required": false,
-      "default": "Habits"
-    },
-    {
-      "id": "habits",
-      "type": "folder",
-      "label": "Habits folder",
-      "description": "The folder with one file for each habit, such as meditate.json.",
-      "why": "The widget shows your habits, and saves a check when you mark a habit done today.",
-      "required": true,
-      "access": "write",
-      "schema": "schemas/habits.json",
-      "files": "*.json",
-      "default": "Life/Health/Habits"
+      "id": "calendar",
+      "type": "eva-google-calendar",
+      "access": "read",
+      "label": "Google Calendar",
+      "description": "Your Google calendars and their events, through Eva's Google login.",
+      "why": "The widget shows the events that happen now and the ones that start in the next hours, with how long until each. It only reads them, and it never sees your Google login. Without a Google login, it shows only the weather.",
+      "required": false
     },
     {
       "id": "location",
       "type": "eva-location",
       "label": "Location",
       "description": "Your last location, from your phone.",
-      "why": "The widget shows near which place you check your habits.",
+      "why": "The widget shows the weather now and its next change, such as rain from 17:00. It sends your location to Open-Meteo, rounded to about one kilometre. Without a location, it shows only your events.",
       "required": false
+    },
+    {
+      "id": "unit",
+      "type": "choice",
+      "label": "Temperature unit",
+      "description": "Celsius or Fahrenheit.",
+      "why": "The widget shows each temperature in this unit.",
+      "required": false,
+      "choices": ["celsius", "fahrenheit"],
+      "default": "celsius"
+    },
+    {
+      "id": "hoursAhead",
+      "type": "number",
+      "label": "Hours to look ahead",
+      "description": "How many hours ahead an event counts as coming soon, from 1 to 24.",
+      "why": "The widget shows the events that start within these hours, with how long until each starts.",
+      "required": false,
+      "default": 6
+    },
+    {
+      "id": "showAllDay",
+      "type": "boolean",
+      "label": "Show all-day events",
+      "description": "Show today's all-day events, such as a holiday, apart from the timed ones.",
+      "why": "The widget shows today's all-day events after the timed ones, or hides them.",
+      "required": false,
+      "default": false
+    },
+    {
+      "id": "hideTitles",
+      "type": "text",
+      "label": "Hide events whose title matches",
+      "description": "A regular expression, without case, such as ^focus time$|commute. An event whose title matches it does not show. A text that is not a valid expression is matched as plain text.",
+      "why": "The widget leaves out repeated events that you do not need to see.",
+      "required": false,
+      "default": ""
     }
   ],
-  "hosts": [],
-  "prompt": "Habits live in {habits}, one JSON file for each habit. Before you create a habit file, ask the person once."
+  "hosts": [
+    {
+      "url": "https://api.open-meteo.com",
+      "why": "The widget gets the weather now and the forecast of the next hours from Open-Meteo, a free weather service. It sends your location, rounded to about one kilometre."
+    }
+  ],
+  "asks": [
+    {
+      "type": "chat",
+      "why": "A tap on \"Open a chat about this event\" puts a line about the event in Eva's message box. Eva never sends it by herself."
+    },
+    {
+      "type": "open",
+      "why": "A tap on \"Open the project\" opens the project of an event in Eva."
+    }
+  ]
 }

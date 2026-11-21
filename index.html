@@ -10,24 +10,43 @@
     <script type="module" src="main.js"></script>
   </head>
   <body>
-    <main class="widget" data-size="medium">
-      <header class="widget-header">
-        <h1 class="widget-title">Habits</h1>
-        <p class="widget-summary" data-role="summary"></p>
-      </header>
-      <ul class="habit-list" data-role="habits"></ul>
-      <footer class="widget-footer">
-        <p class="widget-location" data-role="location"></p>
-        <p class="widget-note" data-role="note" hidden></p>
-        <!-- A link opens in a new tab: Eva's sandbox allows this after a tap. -->
-        <a
-          class="widget-link"
-          href="https://github.com/guplem/eva/blob/main/docs/widgets.md"
-          target="_blank"
-          rel="noopener noreferrer"
-          >How widgets work</a
-        >
+    <main class="widget" data-size="header" aria-label="Summary">
+      <!-- The weather now, and its next change. -->
+      <section class="weather" data-role="weather" aria-label="Weather now">
+        <span class="weather-icon" data-role="weather-icon"></span>
+        <span class="weather-text">
+          <span class="weather-temperature" data-role="temperature"></span>
+          <span class="weather-words">
+            <span class="weather-sky" data-role="sky"></span>
+            <span class="weather-change" data-role="change"></span>
+          </span>
+        </span>
+        <span class="weather-range" data-role="range"></span>
+      </section>
+      <!-- The events of now and of the next hours, the most urgent first. -->
+      <section class="agenda" data-role="agenda" aria-label="Events">
+        <ul class="events" data-role="events"></ul>
+        <p class="calm" data-role="calm" hidden>
+          <span class="calm-line" data-role="calm-line"></span>
+          <span class="calm-next" data-role="calm-next"></span>
+        </p>
+        <p class="later" data-role="later"></p>
+        <p class="status" data-role="status" hidden></p>
+      </section>
+      <!-- The next hours as a line, in the large sizes. -->
+      <section class="timeline" data-role="timeline" aria-label="The next hours" hidden></section>
+      <footer class="credit" data-role="credit">
+        <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Weather by Open-Meteo</a>
       </footer>
+      <!-- The menu of an event, and the list behind the "+N" chip. -->
+      <div class="menu" data-role="menu" role="dialog" aria-modal="false" hidden>
+        <div class="menu-head">
+          <p class="menu-title" data-role="menu-title"></p>
+          <p class="menu-when" data-role="menu-when"></p>
+        </div>
+        <div class="menu-actions" data-role="menu-actions"></div>
+        <button type="button" class="menu-close" data-role="menu-close" aria-label="Close">×</button>
+      </div>
     </main>
   </body>
 </html>
