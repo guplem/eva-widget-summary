@@ -15,7 +15,7 @@ Weather data by [Open-Meteo](https://open-meteo.com/), under [CC BY 4.0](https:/
 - **What comes soon:** each event that starts within the next hours (6 by default), with how long until it starts: "Gym", "in 1 h 40 min".
 - **When nothing is near:** one calm line, "Nothing in the next 6 hours", and the next event of today or tomorrow: "Next: Team standup tomorrow at 09:00".
 - **A tap on an event** opens a small menu:
-  - **Open a chat about this event** puts a line about the event in Eva's message box. Eva never sends it by herself.
+  - **Start a chat about this event** puts a line about the event in Eva's message box. Eva never sends it by herself.
   - **See in Google Calendar** opens the event in a new tab.
   - **Open the project** opens the project of the event in Eva, when its description has a line such as `[eva-project:2026-11-02-1030-example-app]`.
 
