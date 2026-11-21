@@ -1,0 +1,6 @@
+[
+  { "id": "work@example.com", "name": "Work", "color": "#3f51b5", "primary": true },
+  { "id": "personal@example.com", "name": "Personal", "color": "#8e24aa", "primary": false },
+  { "id": "family@example.com", "name": "Family", "color": "#0b8043", "primary": false },
+  { "id": "holidays@example.com", "name": "Holidays", "color": "#e67c73", "primary": false }
+]

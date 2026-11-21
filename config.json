@@ -1,4 +1,6 @@
 {
-  "title": "Habits",
-  "habits": "Life/Health/Habits"
+  "unit": "celsius",
+  "hoursAhead": 6,
+  "showAllDay": false,
+  "hideTitles": "^focus time$"
 }
