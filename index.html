@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Summary</title>
+    <!-- Eva answers this path with her colours. The widget works without it too. -->
+    <link rel="stylesheet" href="eva/theme.css" />
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="main.js"></script>
+  </head>
+  <body>
+    <main class="widget" data-size="medium">
+      <header class="widget-header">
+        <h1 class="widget-title">Habits</h1>
+        <p class="widget-summary" data-role="summary"></p>
+      </header>
+      <ul class="habit-list" data-role="habits"></ul>
+      <footer class="widget-footer">
+        <p class="widget-location" data-role="location"></p>
+        <p class="widget-note" data-role="note" hidden></p>
+        <!-- A link opens in a new tab: Eva's sandbox allows this after a tap. -->
+        <a
+          class="widget-link"
+          href="https://github.com/guplem/eva/blob/main/docs/widgets.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          >How widgets work</a
+        >
+      </footer>
+    </main>
+  </body>
+</html>
